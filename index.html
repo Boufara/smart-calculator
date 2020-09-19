@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link rel="stylesheet" type="text/css" href="css/style.css">
+	<title>Calculatrice | JavaScript</title>
+</head>
+<body>
+<table>
+	<tr>
+		<td colspan="4" id="td_text"><input id="text" type="text" name="text"></td>
+	</tr>
+	<tr>
+		<td colspan="4" id="td_resultat"><input id="resultat" type="text" name="text" value="=" readonly></td>
+	</tr>
+	<tr>
+		<td><input id='add'type="button" name="" value="+" onclick="ToText(this)"></td>
+		<td><input id='sub' type="button" name="" value="-" onclick="ToText(this)"></td>
+		<td><input id='mul' type="button" name="" value="*" onclick="ToText(this)"></td>
+		<td><input id='div' type="button" name="" value="/" onclick="ToText(this)"></td>
+	</tr>
+	<tr>
+		<td><input id='_9' type="button" name="" value="9" onclick="ToText(this)"></td>
+		<td><input id='_8' type="button" name="" value="8" onclick="ToText(this)"></td>
+		<td><input id='_7' type="button" name="" value="7" onclick="ToText(this)"></td>
+		<td><input id='_C' type="button" name="" value="C" onclick="Clear()"></td>
+	</tr>
+	<tr>
+		<td><input id='_6' type="button" name="" value="6" onclick="ToText(this)"></td>
+		<td><input id='_5' type="button" name="" value="5" onclick="ToText(this)"></td>
+		<td><input id='_4' type="button" name="" value="4" onclick="ToText(this)"></td>
+		<td><input id='par1' type="button" name="" value="(" onclick="ToText(this)"></td>
+	</tr>
+	<tr>
+		<td><input id='_3' type="button" name="" value="3" onclick="ToText(this)"></td>
+		<td><input id='_2' type="button" name="" value="2" onclick="ToText(this)"></td>
+		<td><input id='_1' type="button" name="" value="1" onclick="ToText(this)"></td>
+		<td><input id='par2' type="button" name="" value=")" onclick="ToText(this)"></td>
+	</tr>
+	<tr>
+		<td><input id='virgule' type="button" name="" value="." onclick="ToText(this)"></td>
+		<td><input id='_0' type="button" name="" value="0"onclick=" ToText(this)"></td>
+		<td colspan="2"><input id='egale' type="button" name="" value="=" onclick="Calculer()"></td>
+	</tr>
+</table>
+
+<script type="text/javascript">
+
+	var listNombre, listOp;
+
+	//Ajouter du text à l'affichage avec verification des parenthèses
+	function ToText(button){
+		document.getElementById("text").value += button.value;
+	}
+
+	//Calculer
+	function Calculer(){
+		document.getElementById("resultat").value = "=" + OptimiserExpression(document.getElementById("text").value);
+	}
+
+	//Optimisation de l'expression '()' en priorité
+	function OptimiserExpression(exp){
+		exp = CheckExpression(exp);
+
+		//Detecter les expression entres parentheses
+		var index = -1;
+		for (var i = 0; i < exp.length; i++)
+			if (exp[i] == "(") index = i;
+			else if (exp[i] == ")"){
+				exp = exp.replace(exp.substring(index , i +1), CalculerExpression(exp.substring(index +1 , i)));
+				break;
+			}
+		return (index > -1)? OptimiserExpression(exp) : CalculerExpression(exp);
+	}
+
+	function CheckExpression(exp){
+		//Si exp commence par operateur => annuler l'effet avec 0 ou 1
+		switch(exp[0]){
+			case '+' : exp = "0" + exp; break;
+			case '-' : exp = "0" + exp; break;
+			case '*' : exp = "1" + exp; break;
+			case '-' : exp = "1" + exp; break;
+			case '.' : exp = "0" + exp; break;
+			default: break;
+		}
+
+		//(4),2 => (4)0,2
+		exp = exp.replace(").", ")0.");
+
+		//2(4) => 2x(4)
+		for (var i = 0; i < 10; i++) 
+		{
+			exp = exp.replace(i + '(', i + "*(");
+			exp = exp.replace(')' + i, ")*" + i);
+		}
+
+		//Verifier si toutes les parenthèses sont fermer
+		var nbrPar = 0;
+		for (var i = 0; i <exp.length; i++) 
+			if (exp[i] == "(") nbrPar++;
+			else if (exp[i] == ")") nbrPar--;
+
+		if (nbrPar !=0 ){
+			alert("Veuillez fermer les parenthèses");
+			exp = "";
+		}
+		return exp;
+	}
+
+	//Calculer des expressions sans parentheses
+	function CalculerExpression(exp){
+		//Separer les nombres et les operateurs
+		listNombre = exp.split(/[+|-|-|*|/]+/);
+		listOp = exp.split(/[0-9|!.]/).join('').split('');
+
+		//Calculer les expressions de niveau 1 (* et /)
+		OptimiserNV1('/');
+		OptimiserNV1('*');
+
+		//Assigner les nombres négatifs
+		for (var i = 0; i < listOp.length; i++)
+			if (listOp[i] == '-')
+				listNombre[i+1] *= -1;
+
+		//Additionner les resutats	
+		var n = 0;
+		for (var i = 0; i < listNombre.length; i++)
+			n += parseFloat(listNombre[i]);
+
+		return n;
+	}
+
+
+	//Calcule les expressions de niveau 1 (* et /)
+	function OptimiserNV1(op){
+		for (var i = 0; i < listOp.length; i++)
+				if (listOp[i] == op) 
+				{
+					if(op == '*') listNombre[i] *= listNombre[i+1];
+					if(op == '/') listNombre[i] /= listNombre[i+1];
+					listNombre.splice(i+1, 1);
+					listOp.splice(i, 1);
+					if(op == '*' || op == '/') i--;
+				}
+	}
+
+	function Clear(){
+		document.getElementById("text").value = "";
+		document.getElementById("resultat").value = "";
+	}
+</script>
+</body>
+</html>
